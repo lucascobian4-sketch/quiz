@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz WH + To Be (50) — Iniciante</title>
+  <style>
+    :root{--bg:#f6f7fb; --card:#fff; --line:#e6e6ef; --text:#111; --muted:#555;}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:var(--bg); color:var(--text);}
+    header{padding:16px 18px; background:#fff; border-bottom:1px solid var(--line);}
+    h1{margin:0; font-size:18px;}
+    p{margin:6px 0 0; color:#444; font-size:14px}
+    .wrap{max-width:860px; margin:0 auto; padding:14px;}
+    .card{
+      background:var(--card); border:1px solid var(--line); border-radius:16px;
+      padding:14px; margin:12px 0; box-shadow:0 1px 0 rgba(0,0,0,.03);
+    }
+    .topbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .pill{
+      background:#eef1ff; border:1px solid #d9e0ff; padding:6px 10px;
+      border-radius:999px; font-weight:700; font-size:13px;
+    }
+    .btn{
+      padding:10px 12px; border-radius:12px; border:1px solid #d9d9e8; background:#fff;
+      font-weight:700; font-size:14px;
+    }
+    .btn:active{transform:scale(.99);}
+    .progress{
+      height:10px; width:100%; background:#f0f1f6; border-radius:999px; overflow:hidden;
+      border:1px solid #e5e6f0;
+    }
+    .progress > div{height:100%; width:0%; background:#111;}
+    .qhead{display:flex; gap:10px; align-items:flex-start; justify-content:space-between;}
+    .qnum{font-weight:900; font-size:14px; color:#222;}
+    .tag{font-size:12px; font-weight:800; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fafafe;}
+    .q{font-weight:900; margin:8px 0 10px; font-size:16px; line-height:1.25;}
+    .sub{margin:0 0 10px; color:var(--muted); font-size:13px;}
+    .opts{display:grid; gap:10px;}
+    button.opt{
+      text-align:left; padding:12px 12px; border-radius:14px;
+      border:1px solid #d9d9e8; background:#fafafe; font-size:15px;
+    }
+    button.opt[disabled]{opacity:.9;}
+    button.opt.ok{border-color:#2bb673; background:#eafff3;}
+    button.opt.no{border-color:#ff4d4d; background:#fff0f0;}
+    .feedback{margin-top:10px; font-size:14px; color:#222;}
+    .muted{color:var(--muted);}
+    details{margin-top:10px;}
+    summary{cursor:pointer; font-weight:800;}
+    .tiny{font-size:12px; color:var(--muted);}
+    .grid2{display:grid; gap:10px; grid-template-columns:1fr; }
+    @media (min-width:760px){ .grid2{grid-template-columns:1fr 1fr;} }
+    .footer{color:#555; font-size:13px; padding:6px 2px 16px; line-height:1.35;}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; background:#f1f1f6; border:1px solid #e2e2ef; padding:2px 6px; border-radius:8px;}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Quiz WH + To Be (50) — Iniciante</h1>
+  <p>Sem <b>DO/DOES</b>. Só <b>am/is/are</b> e <b>was/were</b>. Palavras novas vêm com significado em português.</p>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="topbar">
+      <div class="row">
+        <div class="pill" id="scorePill">Pontuação: 0/50</div>
+        <div class="pill" id="donePill">Respondidas: 0/50</div>
+      </div>
+      <div class="row">
+        <button class="btn" onclick="shuffleQuiz()">Embaralhar</button>
+        <button class="btn" onclick="resetQuiz()">Reiniciar</button>
+      </div>
+    </div>
+    <div style="margin-top:10px" class="progress" aria-label="Progresso">
+      <div id="bar"></div>
+    </div>
+    <div class="footer" style="margin-top:10px">
+      Dica: estrutura → <b>WH + (am/is/are/was/were) + sujeito?</b> <span class="kbd">Where are you?</span> <span class="kbd">When was the meeting?</span><br/>
+      Tipos de questão: <b>Complete</b> (escolha o WH) e <b>Resposta → Pergunta</b> (escolha a melhor pergunta).
+    </div>
+    <details>
+      <summary>Ver lista de WH (para lembrar)</summary>
+      <div class="tiny" style="margin-top:8px">
+        <b>What</b> (o que/qual) · <b>Where</b> (onde) · <b>When</b> (quando) · <b>Who</b> (quem) · <b>Why</b> (por quê) · <b>How</b> (como/quanto/qual estado)
+      </div>
+    </details>
+  </div>
+
+  <div id="quiz" class="grid2"></div>
+
+  <div class="card">
+    <div class="footer">
+      Quer que eu faça uma versão “modo treino”, onde <b>você escolhe e já aparece a forma completa</b> (ex: “Where are you?”) + tradução?
+      Também posso criar uma versão com tema: <b>trabalho</b> (janelas), <b>carro</b>, <b>casa</b> ou <b>viagem</b>.
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tipos:
+  // 1) fillWH: completar o WH (____ are you ...?)
+  // 2) pickQuestion: dado uma RESPOSTA, escolher a melhor PERGUNTA (todas com to be)
+  const baseQuestions = [
+    // ----------- FILL WH (Presente) -----------
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"appointment = compromisso", prompt:"(appointment = compromisso) ____ is your appointment?", opts:["When","Where","Who","Why"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"address = endereço", prompt:"(address = endereço) ____ is your address?", opts:["What","When","Why","How"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"nearby = perto", prompt:"(nearby = perto) ____ is the store? (It is nearby.)", opts:["Where","Who","When","What"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"busy = ocupado", prompt:"(busy = ocupado) ____ are you today? (I am busy.)", opts:["How","Where","When","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"late = atrasado", prompt:"(late = atrasado) ____ are you late?", opts:["Why","What","Who","Where"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"ready = pronto", prompt:"(ready = pronto) ____ are you now? (We are ready.)", opts:["How","When","Where","What"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"weather = clima/tempo", prompt:"(weather = clima/tempo) ____ is the weather?", opts:["How","Who","When","Where"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"price = preço", prompt:"(price = preço) ____ is the price?", opts:["What","Where","When","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"problem = problema", prompt:"(problem = problema) ____ is the problem?", opts:["What","Where","When","How"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"important = importante", prompt:"(important = importante) ____ is this important?", opts:["Why","Who","Where","When"], a:0},
+
+    // ----------- FILL WH (Passado) -----------
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"meeting = reunião", prompt:"(meeting = reunião) ____ was the meeting?", opts:["When","Where","Who","How"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"at home = em casa", prompt:"(at home = em casa) ____ were you yesterday?", opts:["Where","What","Who","When"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"tired = cansado", prompt:"(tired = cansado) ____ were you last night? (I was tired.)", opts:["How","Where","When","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"party = festa", prompt:"(party = festa) ____ was the party?", opts:["How","Where","Who","When"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"reason = motivo", prompt:"(reason = motivo) ____ were you angry?", opts:["Why","Where","Who","When"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"location = localização", prompt:"(location = localização) ____ was the location?", opts:["Where","How","Why","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"early = cedo", prompt:"(early = cedo) ____ was it? (It was early.)", opts:["How","When","Where","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"your boss = seu chefe", prompt:"(your boss = seu chefe) ____ was your boss there?", opts:["Why","Where","When","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"crowded = lotado", prompt:"(crowded = lotado) ____ was the store? (It was crowded.)", opts:["How","Where","Who","When"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"the issue = o problema/a questão", prompt:"(the issue = o problema) ____ was the issue?", opts:["What","Where","When","Who"], a:0},
+
+    // ----------- PICK QUESTION (Presente) -----------
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"hungry = com fome", answer:"(hungry = com fome) Answer: I am hungry.", opts:["How are you?","Where are you?","Who are you?","When are you?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"in the garage = na garagem", answer:"(in the garage = na garagem) Answer: I am in the garage.", opts:["Where are you?","How are you?","Why are you?","Who are you?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"my coworker = meu colega de trabalho", answer:"(my coworker = meu colega de trabalho) Answer: He is my coworker.", opts:["Who is he?","Where is he?","When is he?","How is he?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"tomorrow = amanhã", answer:"(tomorrow = amanhã) Answer: The inspection is tomorrow.", opts:["When is the inspection?","Where is the inspection?","Who is the inspection?","How is the inspection?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"expensive = caro", answer:"(expensive = caro) Answer: The tool is expensive.", opts:["How is the tool?","Where is the tool?","Who is the tool?","When is the tool?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"a mistake = um erro", answer:"(a mistake = um erro) Answer: The mistake is the address.", opts:["What is the mistake?","Where is the mistake?","Who is the mistake?","When is the mistake?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"here = aqui", answer:"(here = aqui) Answer: The keys are here.", opts:["Where are the keys?","How are the keys?","Who are the keys?","When are the keys?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"because of the rain = por causa da chuva", answer:"(because of the rain = por causa da chuva) Answer: I am late because of the rain.", opts:["Why are you late?","Where are you late?","Who are you late?","When are you late?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"fine = bem", answer:"(fine = bem) Answer: We are fine.", opts:["How are you?","Where are you?","Who are you?","When are you?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"my phone = meu telefone", answer:"(my phone = meu telefone) Answer: This is my phone.", opts:["What is this?","Where is this?","Who is this?","When is this?"], a:0},
+
+    // ----------- PICK QUESTION (Passado) -----------
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"at work = no trabalho", answer:"(at work = no trabalho) Answer: He was at work.", opts:["Where was he?","How was he?","Who was he?","When was he?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"yesterday = ontem", answer:"(yesterday = ontem) Answer: The delivery was yesterday.", opts:["When was the delivery?","Where was the delivery?","Who was the delivery?","How was the delivery?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"excellent = excelente", answer:"(excellent = excelente) Answer: The service was excellent.", opts:["How was the service?","Where was the service?","Who was the service?","When was the service?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"my neighbor = meu vizinho", answer:"(my neighbor = meu vizinho) Answer: She was my neighbor.", opts:["Who was she?","Where was she?","When was she?","How was she?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"because it was closed = porque estava fechado", answer:"(because it was closed = porque estava fechado) Answer: We were there late because it was closed.", opts:["Why were you there late?","Where were you there late?","Who were you there late?","When were you there late?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"a mess = uma bagunça", answer:"(a mess = uma bagunça) Answer: The room was a mess.", opts:["How was the room?","Where was the room?","Who was the room?","When was the room?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"in the kitchen = na cozinha", answer:"(in the kitchen = na cozinha) Answer: The cups were in the kitchen.", opts:["Where were the cups?","How were the cups?","Who were the cups?","When were the cups?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"on Monday = na segunda-feira", answer:"(on Monday = na segunda-feira) Answer: The appointment was on Monday.", opts:["When was the appointment?","Where was the appointment?","Who was the appointment?","How was the appointment?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"upset = chateado", answer:"(upset = chateado) Answer: They were upset.", opts:["How were they?","Where were they?","Who were they?","When were they?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"because of traffic = por causa do trânsito", answer:"(because of traffic = por causa do trânsito) Answer: I was late because of traffic.", opts:["Why were you late?","Where were you late?","Who were you late?","When were you late?"], a:0},
+
+    // ----------- MIX / EXTRA CREATIVE (FILL WH) -----------
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"available = disponível", prompt:"(available = disponível) ____ is your boss? (He is available now.)", opts:["How","Where","When","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"inside = dentro", prompt:"(inside = dentro) ____ are the tools? (They are inside.)", opts:["Where","How","When","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"dangerous = perigoso", prompt:"(dangerous = perigoso) ____ is it dangerous?", opts:["Why","Where","Who","When"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"owner = dono(a)", prompt:"(owner = dono) ____ is the owner?", opts:["Who","Where","When","How"], a:0},
+    {type:"fillWH", tag:"Complete (Presente)", vocab:"clean = limpo", prompt:"(clean = limpo) ____ is the room? (It is clean.)", opts:["How","Where","Who","When"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"quiet = silencioso", prompt:"(quiet = silencioso) ____ was the neighborhood last night? (It was quiet.)", opts:["How","Where","Who","When"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"open = aberto", prompt:"(open = aberto) ____ was the store open?", opts:["Why","Where","When","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"lost = perdido", prompt:"(lost = perdido) ____ were the keys? (They were lost.)", opts:["How","Where","When","Who"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"the manager = o gerente", prompt:"(the manager = o gerente) ____ was the manager?", opts:["Who","Where","When","How"], a:0},
+    {type:"fillWH", tag:"Complete (Passado)", vocab:"at the office = no escritório", prompt:"(at the office = no escritório) ____ was the paperwork?", opts:["Where","Who","When","How"], a:0},
+
+    // ----------- MORE PICK QUESTION (Creative) -----------
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"a new client = um cliente novo", answer:"(a new client = um cliente novo) Answer: He is a new client.", opts:["Who is he?","Where is he?","When is he?","How is he?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"in the living room = na sala", answer:"(in the living room = na sala) Answer: The sofa is in the living room.", opts:["Where is the sofa?","How is the sofa?","Who is the sofa?","When is the sofa?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"because it is urgent = porque é urgente", answer:"(because it is urgent = porque é urgente) Answer: The job is urgent.", opts:["Why is the job urgent?","Where is the job urgent?","Who is the job urgent?","When is the job urgent?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"in the parking lot = no estacionamento", answer:"(in the parking lot = no estacionamento) Answer: The car was in the parking lot.", opts:["Where was the car?","How was the car?","Who was the car?","When was the car?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"amazing = incrível", answer:"(amazing = incrível) Answer: The view was amazing.", opts:["How was the view?","Where was the view?","Who was the view?","When was the view?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"because it was my first day = porque era meu primeiro dia", answer:"(because it was my first day = porque era meu primeiro dia) Answer: I was nervous.", opts:["Why were you nervous?","Where were you nervous?","Who were you nervous?","When were you nervous?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"on the table = na mesa", answer:"(on the table = na mesa) Answer: The paperwork is on the table.", opts:["Where is the paperwork?","How is the paperwork?","Who is the paperwork?","When is the paperwork?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"my favorite = meu favorito", answer:"(my favorite = meu favorito) Answer: That restaurant was my favorite.", opts:["What was your favorite?","Where was your favorite?","Who was your favorite?","When was your favorite?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Presente)", vocab:"simple = simples", answer:"(simple = simples) Answer: The solution is simple.", opts:["How is the solution?","Where is the solution?","Who is the solution?","When is the solution?"], a:0},
+    {type:"pickQuestion", tag:"Resposta → Pergunta (Passado)", vocab:"at noon = ao meio-dia", answer:"(at noon = ao meio-dia) Answer: Lunch was at noon.", opts:["When was lunch?","Where was lunch?","Who was lunch?","How was lunch?"], a:0}
+  ];
+
+  // Garantir 50 questões: baseQuestions já tem 50 (por construção).
+  let questions = [...baseQuestions];
+
+  const quizEl = document.getElementById("quiz");
+  const scorePill = document.getElementById("scorePill");
+  const donePill  = document.getElementById("donePill");
+  const bar = document.getElementById("bar");
+
+  let answered = [];
+  let score = 0;
+  let done = 0;
+
+  function initState() {
+    answered = new Array(questions.length).fill(false);
+    score = 0;
+    done = 0;
+    updateHUD();
+  }
+
+  function updateHUD() {
+    scorePill.textContent = `Pontuação: ${score}/${questions.length}`;
+    donePill.textContent  = `Respondidas: ${done}/${questions.length}`;
+    const pct = Math.round((done / questions.length) * 100);
+    bar.style.width = `${pct}%`;
+  }
+
+  function render() {
+    quizEl.innerHTML = "";
+    questions.forEach((item, idx) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const head = document.createElement("div");
+      head.className = "qhead";
+
+      const left = document.createElement("div");
+      left.innerHTML = `<div class="qnum">Questão ${idx+1}</div>`;
+
+      const right = document.createElement("div");
+      right.innerHTML = `<span class="tag">${item.tag}</span>`;
+
+      head.appendChild(left);
+      head.appendChild(right);
+
+      const q = document.createElement("div");
+      q.className = "q";
+
+      const sub = document.createElement("div");
+      sub.className = "sub";
+
+      if (item.type === "fillWH") {
+        sub.innerHTML = `<span class="muted"><b>Vocabulário:</b> ${item.vocab}</span>`;
+        q.textContent = item.prompt;
+      } else {
+        sub.innerHTML = `<span class="muted"><b>Vocabulário:</b> ${item.vocab}</span>`;
+        q.innerHTML = `<div class="muted" style="font-weight:800;margin-bottom:6px">Escolha a melhor pergunta para esta resposta:</div>
+                       <div>${item.answer}</div>`;
+      }
+
+      const opts = document.createElement("div");
+      opts.className = "opts";
+
+      const fb = document.createElement("div");
+      fb.className = "feedback";
+      fb.id = `fb${idx}`;
+      fb.textContent = "Escolha uma opção.";
+
+      item.opts.forEach((label, optIdx) => {
+        const btn = document.createElement("button");
+        btn.className = "opt";
+        btn.textContent = label;
+        btn.onclick = () => choose(idx, optIdx, btn, opts, fb);
+        opts.appendChild(btn);
+      });
+
+      card.appendChild(head);
+      card.appendChild(sub);
+      card.appendChild(q);
+      card.appendChild(opts);
+      card.appendChild(fb);
+
+      quizEl.appendChild(card);
+    });
+  }
+
+  function choose(qIdx, optIdx, btn, optsContainer, fbEl) {
+    if (answered[qIdx]) return;
+    answered[qIdx] = true;
+    done++;
+
+    const correct = questions[qIdx].a;
+
+    [...optsContainer.querySelectorAll("button")].forEach(b => b.disabled = true);
+
+    if (optIdx === correct) {
+      btn.classList.add("ok");
+      score++;
+      fbEl.textContent = "✅ Certo!";
+    } else {
+      btn.classList.add("no");
+      const correctBtn = optsContainer.querySelectorAll("button")[correct];
+      correctBtn.classList.add("ok");
+      fbEl.textContent = `❌ Errado. Correto: ${questions[qIdx].opts[correct]}`;
+    }
+
+    updateHUD();
+  }
+
+  function resetQuiz() {
+    initState();
+    render();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function shuffleQuiz() {
+    // Embaralha mantendo estrutura
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+    resetQuiz();
+  }
+
+  // Start
+  initState();
+  render();
+</script>
+</body>
+</html>
